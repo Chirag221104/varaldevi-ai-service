@@ -1,0 +1,10 @@
+garbage
+plastic_bottles
+paper_waste
+people_washing_clothes
+crowd
+water_foam
+pollution
+dirty_water
+greenery
+normal
