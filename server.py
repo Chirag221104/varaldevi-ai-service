@@ -7,9 +7,24 @@ from io import BytesIO
 
 app = Flask(__name__)
 
-# Load model
-model = tf.keras.models.load_model("model/tf_model")
-labels = open("model/labels.txt").read().splitlines()
+# --- TEMPORARY DUMMY MODEL (works without training) ---
+model = tf.keras.Sequential([
+    tf.keras.layers.Flatten(input_shape=(224, 224, 3)),
+    tf.keras.layers.Dense(10, activation="softmax")
+])
+
+labels = [
+    "garbage",
+    "plastic_bottles",
+    "paper_waste",
+    "people_washing_clothes",
+    "crowd",
+    "water_foam",
+    "pollution",
+    "dirty_water",
+    "greenery",
+    "normal"
+]
 
 def preprocess(img):
     img = img.resize((224, 224))
@@ -21,17 +36,21 @@ def preprocess(img):
 def analyze():
     data = request.get_json()
     image_url = data.get("imageUrl")
-    
-    response = requests.get(image_url)
-    img = Image.open(BytesIO(response.content)).convert("RGB")
-    
-    arr = preprocess(img)
-    preds = model.predict(arr)[0]
-    
-    top_indices = preds.argsort()[-3:][::-1]
-    tags = [labels[i] for i in top_indices]
 
-    return jsonify({"tags": tags})
+    try:
+        response = requests.get(image_url)
+        img = Image.open(BytesIO(response.content)).convert("RGB")
+        arr = preprocess(img)
+
+        preds = model.predict(arr)[0]
+        top_indices = preds.argsort()[-3:][::-1]
+        tags = [labels[i] for i in top_indices]
+
+        return jsonify({"tags": tags})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=6000)
